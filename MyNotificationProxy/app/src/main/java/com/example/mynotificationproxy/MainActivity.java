@@ -1,12 +1,15 @@
 package com.example.mynotificationproxy;
 
 import android.app.AlertDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -14,13 +17,20 @@ import com.google.android.material.snackbar.Snackbar;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import android.text.TextUtils;
+import android.util.DebugUtils;
+import android.util.Log;
 import android.view.View;
 import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
 
         // Here we get a reference to the image we will modify when a notification is received
@@ -41,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
                 = (ImageView) this.findViewById(R.id.intercepted_notification_logo);
 
         // If the user did not turn the notification listener service on we prompt him to do so
-        if(!isNotificationServiceEnabled()){
+        if (!isNotificationServiceEnabled()) {
             enableNotificationListenerAlertDialog = buildNotificationServiceAlertDialog();
             enableNotificationListenerAlertDialog.show();
         }
@@ -50,7 +61,56 @@ public class MainActivity extends AppCompatActivity {
         imageChangeBroadcastReceiver = new ImageChangeBroadcastReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("com.github.chagall.notificationlistenerexample");
-        registerReceiver(imageChangeBroadcastReceiver,intentFilter);
+        registerReceiver(imageChangeBroadcastReceiver, intentFilter);
+
+
+        createNotificationChannel();
+        try {
+            SendNotification();
+        }
+        catch (Exception e) {
+            throw e;
+        }
+//        SendNotification();
+
+//        Timer t = new Timer();
+//        t.scheduleAtFixedRate(new TimerTask() {
+//            @Override
+//            public void run() {
+//                SendNotification();
+//            }
+//        }, 0, 5 * 1000);
+    }
+
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "myNotifChannel";
+            String description = "my notif channel";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel("123123", name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    private int notifCounter = 0;
+
+    private void SendNotification() {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "123123")
+                .setSmallIcon(R.drawable.notification_logo)
+                .setContentTitle("My test notif")
+                .setContentText("My test notif text")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+
+// notificationId is a unique int for each notification that you must define
+        notificationManager.notify(notifCounter++, builder.build());
     }
 
     @Override
@@ -62,32 +122,34 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Change Intercepted Notification Image
      * Changes the MainActivity image based on which notification was intercepted
+     *
      * @param notificationCode The intercepted notification code
      */
-    private void changeInterceptedNotificationImage(int notificationCode){
-        switch(notificationCode){
-            case NotificationListenerExampleService.InterceptedNotificationCode.FACEBOOK_CODE:
-                interceptedNotificationImageView.setImageResource(R.drawable.facebook_logo);
-                break;
-            case NotificationListenerExampleService.InterceptedNotificationCode.INSTAGRAM_CODE:
-                interceptedNotificationImageView.setImageResource(R.drawable.instagram_logo);
-                break;
-            case NotificationListenerExampleService.InterceptedNotificationCode.WHATSAPP_CODE:
-                interceptedNotificationImageView.setImageResource(R.drawable.whatsapp_logo);
-                break;
-            case NotificationListenerExampleService.InterceptedNotificationCode.OTHER_NOTIFICATIONS_CODE:
-                interceptedNotificationImageView.setImageResource(R.drawable.other_notification_logo);
-                break;
-        }
+    private void changeInterceptedNotificationImage(int notificationCode) {
+//        switch (notificationCode) {
+//            case NotificationListenerExampleService.InterceptedNotificationCode.FACEBOOK_CODE:
+//                interceptedNotificationImageView.setImageResource(R.drawable.facebook_logo);
+//                break;
+//            case NotificationListenerExampleService.InterceptedNotificationCode.INSTAGRAM_CODE:
+//                interceptedNotificationImageView.setImageResource(R.drawable.instagram_logo);
+//                break;
+//            case NotificationListenerExampleService.InterceptedNotificationCode.WHATSAPP_CODE:
+//                interceptedNotificationImageView.setImageResource(R.drawable.whatsapp_logo);
+//                break;
+//            case NotificationListenerExampleService.InterceptedNotificationCode.OTHER_NOTIFICATIONS_CODE:
+//                interceptedNotificationImageView.setImageResource(R.drawable.other_notification_logo);
+//                break;
+//        }
     }
 
     /**
      * Is Notification Service Enabled.
      * Verifies if the notification listener service is enabled.
      * Got it from: https://github.com/kpbird/NotificationListenerService-Example/blob/master/NLSExample/src/main/java/com/kpbird/nlsexample/NLService.java
+     *
      * @return True if enabled, false otherwise.
      */
-    private boolean isNotificationServiceEnabled(){
+    private boolean isNotificationServiceEnabled() {
         String pkgName = getPackageName();
         final String flat = Settings.Secure.getString(getContentResolver(),
                 ENABLED_NOTIFICATION_LISTENERS);
@@ -110,11 +172,11 @@ public class MainActivity extends AppCompatActivity {
      * We use this Broadcast Receiver to notify the Main Activity when
      * a new notification has arrived, so it can properly change the
      * notification image
-     * */
+     */
     public class ImageChangeBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            int receivedNotificationCode = intent.getIntExtra("Notification Code",-1);
+            int receivedNotificationCode = intent.getIntExtra("Notification Code", -1);
             changeInterceptedNotificationImage(receivedNotificationCode);
         }
     }
@@ -124,9 +186,10 @@ public class MainActivity extends AppCompatActivity {
      * Build Notification Listener Alert Dialog.
      * Builds the alert dialog that pops up if the user has not turned
      * the Notification Listener Service on yet.
+     *
      * @return An alert dialog which leads to the notification enabling screen
      */
-    private AlertDialog buildNotificationServiceAlertDialog(){
+    private AlertDialog buildNotificationServiceAlertDialog() {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder.setTitle(R.string.notification_listener_service);
         alertDialogBuilder.setMessage(R.string.notification_listener_service_explanation);
@@ -143,6 +206,6 @@ public class MainActivity extends AppCompatActivity {
                         // the app. will not work as expected
                     }
                 });
-        return(alertDialogBuilder.create());
+        return (alertDialogBuilder.create());
     }
 }
