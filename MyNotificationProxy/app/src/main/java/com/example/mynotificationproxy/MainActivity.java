@@ -27,6 +27,7 @@ import android.view.View;
 import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.ImageView;
 
 import java.util.Timer;
@@ -38,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String ACTION_NOTIFICATION_LISTENER_SETTINGS = "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS";
 
     private ImageView interceptedNotificationImageView;
-    private ImageChangeBroadcastReceiver imageChangeBroadcastReceiver;
+    private NotificationReceiver imageChangeBroadcastReceiver;
     private AlertDialog enableNotificationListenerAlertDialog;
 
     @Override
@@ -57,29 +58,34 @@ public class MainActivity extends AppCompatActivity {
             enableNotificationListenerAlertDialog.show();
         }
 
-        // Finally we register a receiver to tell the MainActivity when a notification has been received
-        imageChangeBroadcastReceiver = new ImageChangeBroadcastReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction("com.github.chagall.notificationlistenerexample");
-        registerReceiver(imageChangeBroadcastReceiver, intentFilter);
+        EditText tt = (EditText)findViewById(R.id.editTextTextMultiLine);
+        tt.setText("my test text\n");
 
+        Log.i("notif", "in main create");
+
+//        Intent intent=new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+//        startActivity(intent);
+//        startService(new Intent(this, NotificationListenerExampleService.class));
+
+        // Finally we register a receiver to tell the MainActivity when a notification has been received
+        imageChangeBroadcastReceiver = new NotificationReceiver(tt);
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("com.example.NOTIFICATION");
+        registerReceiver(imageChangeBroadcastReceiver, intentFilter);
 
         createNotificationChannel();
         try {
-            SendNotification();
+            Timer t = new Timer();
+            t.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    SendNotification();
+                }
+            }, 0, 5 * 1000);
         }
         catch (Exception e) {
             throw e;
         }
-//        SendNotification();
-
-//        Timer t = new Timer();
-//        t.scheduleAtFixedRate(new TimerTask() {
-//            @Override
-//            public void run() {
-//                SendNotification();
-//            }
-//        }, 0, 5 * 1000);
     }
 
     private void createNotificationChannel() {
@@ -104,12 +110,12 @@ public class MainActivity extends AppCompatActivity {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "123123")
                 .setSmallIcon(R.drawable.notification_logo)
                 .setContentTitle("My test notif")
-                .setContentText("My test notif text")
+                .setContentText("My test notif text :: " + notifCounter)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
 
-// notificationId is a unique int for each notification that you must define
+        // notificationId is a unique int for each notification that you must define
         notificationManager.notify(notifCounter++, builder.build());
     }
 
@@ -117,29 +123,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         unregisterReceiver(imageChangeBroadcastReceiver);
-    }
-
-    /**
-     * Change Intercepted Notification Image
-     * Changes the MainActivity image based on which notification was intercepted
-     *
-     * @param notificationCode The intercepted notification code
-     */
-    private void changeInterceptedNotificationImage(int notificationCode) {
-//        switch (notificationCode) {
-//            case NotificationListenerExampleService.InterceptedNotificationCode.FACEBOOK_CODE:
-//                interceptedNotificationImageView.setImageResource(R.drawable.facebook_logo);
-//                break;
-//            case NotificationListenerExampleService.InterceptedNotificationCode.INSTAGRAM_CODE:
-//                interceptedNotificationImageView.setImageResource(R.drawable.instagram_logo);
-//                break;
-//            case NotificationListenerExampleService.InterceptedNotificationCode.WHATSAPP_CODE:
-//                interceptedNotificationImageView.setImageResource(R.drawable.whatsapp_logo);
-//                break;
-//            case NotificationListenerExampleService.InterceptedNotificationCode.OTHER_NOTIFICATIONS_CODE:
-//                interceptedNotificationImageView.setImageResource(R.drawable.other_notification_logo);
-//                break;
-//        }
     }
 
     /**
@@ -173,14 +156,21 @@ public class MainActivity extends AppCompatActivity {
      * a new notification has arrived, so it can properly change the
      * notification image
      */
-    public class ImageChangeBroadcastReceiver extends BroadcastReceiver {
+    class NotificationReceiver extends BroadcastReceiver{
+
+        private final EditText t;
+
+        public NotificationReceiver(EditText t) {
+            this.t = t;
+        }
+
         @Override
         public void onReceive(Context context, Intent intent) {
-            int receivedNotificationCode = intent.getIntExtra("Notification Code", -1);
-            changeInterceptedNotificationImage(receivedNotificationCode);
+            String temp = intent.getStringExtra("notification_event");
+            Log.i("receiver", temp);
+            t.setText(temp + "\n");
         }
     }
-
 
     /**
      * Build Notification Listener Alert Dialog.

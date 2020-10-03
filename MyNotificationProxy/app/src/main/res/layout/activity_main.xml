@@ -21,17 +21,26 @@
         android:textAlignment="center" />
 
     <FrameLayout
+        android:id="@+id/intercepted_notification_logo_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/intercepted_notification_logo_container">
+        android:background="#FFFFFF">
 
         <ImageView
-            android:layout_width="200dp"
-            android:layout_height="200dp"
             android:id="@+id/intercepted_notification_logo"
-            android:src="@drawable/notification_logo"
+            android:layout_width="96dp"
+            android:layout_height="97dp"
+            android:layout_gravity="center"
             android:contentDescription="@string/notification_logo"
-            android:layout_gravity="center" />
+            android:src="@drawable/notification_logo" />
+
+        <EditText
+            android:id="@+id/editTextTextMultiLine"
+            android:layout_width="match_parent"
+            android:layout_height="264dp"
+            android:ems="10"
+            android:gravity="start|top"
+            android:inputType="textMultiLine" />
 
     </FrameLayout>
 
