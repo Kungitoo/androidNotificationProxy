@@ -48,18 +48,11 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        // Here we get a reference to the image we will modify when a notification is received
-        interceptedNotificationImageView
-                = (ImageView) this.findViewById(R.id.intercepted_notification_logo);
-
         // If the user did not turn the notification listener service on we prompt him to do so
         if (!isNotificationServiceEnabled()) {
             enableNotificationListenerAlertDialog = buildNotificationServiceAlertDialog();
             enableNotificationListenerAlertDialog.show();
         }
-
-        EditText tt = (EditText)findViewById(R.id.editTextTextMultiLine);
-        tt.setText("my test text\n");
 
         Log.i("notif", "in main create");
 
@@ -68,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
 //        startService(new Intent(this, NotificationListenerExampleService.class));
 
         // Finally we register a receiver to tell the MainActivity when a notification has been received
-        imageChangeBroadcastReceiver = new NotificationReceiver(tt);
+        imageChangeBroadcastReceiver = new NotificationReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("com.example.NOTIFICATION");
         registerReceiver(imageChangeBroadcastReceiver, intentFilter);
@@ -81,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                     SendNotification();
                 }
-            }, 0, 5 * 1000);
+            }, 0, 15 * 1000);
         }
         catch (Exception e) {
             throw e;
@@ -158,17 +151,10 @@ public class MainActivity extends AppCompatActivity {
      */
     class NotificationReceiver extends BroadcastReceiver{
 
-        private final EditText t;
-
-        public NotificationReceiver(EditText t) {
-            this.t = t;
-        }
-
         @Override
         public void onReceive(Context context, Intent intent) {
             String temp = intent.getStringExtra("notification_event");
             Log.i("receiver", temp);
-            t.setText(temp + "\n");
         }
     }
 

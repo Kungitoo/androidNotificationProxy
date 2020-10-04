@@ -30,12 +30,8 @@ public class NotificationObject {
     private boolean isOngoing;
 
     private long when;
-    private int number;
     private int flags;
     private int defaults;
-    private int ledARGB;
-    private int ledOff;
-    private int ledOn;
 
     // Compat
     private String group;
@@ -99,15 +95,6 @@ public class NotificationObject {
         when = n.when;
         flags = n.flags;
         defaults = n.defaults;
-        ledARGB = n.ledARGB;
-        ledOff = n.ledOffMS;
-        ledOn = n.ledOnMS;
-
-        if (Build.VERSION.SDK_INT < 24) { // as of 24, this number is not shown anymore
-            number = n.number;
-        } else {
-            number = -1;
-        }
 
         // 16
         priority = n.priority;
@@ -168,36 +155,9 @@ public class NotificationObject {
         try {
             JSONObject json = new JSONObject();
 
-            // General
-            json.put("packageName", packageName);
             json.put("postTime", postTime);
             json.put("systemTime", systemTime);
-            json.put("offset", TimeZone.getDefault().getOffset(systemTime));
-            json.put("version", BuildConfig.VERSION_CODE);
-            json.put("sdk", android.os.Build.VERSION.SDK_INT);
-
-            json.put("isOngoing", isOngoing);
-            json.put("isClearable", isClearable);
-
-            json.put("when", when);
-            json.put("number", number);
-            json.put("flags", flags);
-            json.put("defaults", defaults);
-            json.put("ledARGB", ledARGB);
-            json.put("ledOn", ledOn);
-            json.put("ledOff", ledOff);
-
-            // Compat
-            json.put("group", group);
-            json.put("isGroupSummary", isGroupSummary);
-            json.put("category", category);
-            json.put("actionCount", actionCount);
-            json.put("isLocalOnly", isLocalOnly);
-
-            json.put("people", people == null ? 0 : people.size());
-            json.put("style", style);
-            //json.put("displayName",    displayName);
-
+            
             // Text
             json.put("tickerText", tickerText);
             json.put("title", title);
@@ -208,6 +168,29 @@ public class NotificationObject {
             json.put("textSub", textSub);
             json.put("textSummary", textSummary);
             json.put("textLines", textLines);
+
+            // General
+            json.put("packageName", packageName);
+            json.put("offset", TimeZone.getDefault().getOffset(systemTime));
+            json.put("version", BuildConfig.VERSION_CODE);
+            json.put("sdk", android.os.Build.VERSION.SDK_INT);
+
+            json.put("isOngoing", isOngoing);
+            json.put("isClearable", isClearable);
+
+            json.put("when", when);
+            json.put("flags", flags);
+            json.put("defaults", defaults);
+
+            // Compat
+            json.put("group", group);
+            json.put("isGroupSummary", isGroupSummary);
+            json.put("category", category);
+            json.put("actionCount", actionCount);
+            json.put("isLocalOnly", isLocalOnly);
+
+            json.put("people", people == null ? 0 : people.size());
+            json.put("style", style);
 
             // 16
             json.put("priority", priority);
